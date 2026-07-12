@@ -1,0 +1,11 @@
+node_modules
+.next
+coverage
+.DS_Store
+*.log
+*.tsbuildinfo
+
+# Personal Strava exports and local secrets
+activities.csv
+.env*
+!.env.example
