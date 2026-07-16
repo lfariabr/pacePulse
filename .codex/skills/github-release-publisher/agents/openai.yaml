@@ -1,0 +1,4 @@
+interface:
+  display_name: "GitHub Release Publisher"
+  short_description: "Ship verified PacePulse releases through GitHub"
+  default_prompt: "Use $github-release-publisher to prepare, merge, tag, and verify the next PacePulse release."
