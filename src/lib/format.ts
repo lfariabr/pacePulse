@@ -14,9 +14,12 @@ export function formatCompactDuration(seconds: number) {
 
 export function formatDistance(meters: number) {
   if (meters === 0) return "—";
-  if (meters < 1000) return `${Math.round(meters)} m`;
+  if (meters < 1000) return `${Math.round(meters).toLocaleString("en-AU")} m`;
   const km = meters / 1000;
-  return `${km >= 100 ? km.toFixed(0) : km.toFixed(1)} km`;
+  return `${km.toLocaleString("en-AU", {
+    minimumFractionDigits: km < 100 ? 1 : 0,
+    maximumFractionDigits: km < 100 ? 1 : 0,
+  })} km`;
 }
 
 export function formatElevation(meters: number) {
