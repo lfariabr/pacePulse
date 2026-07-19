@@ -1,10 +1,11 @@
 import Link from "next/link";
-import { ChevronLeft, ChevronRight, Search, SlidersHorizontal } from "lucide-react";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ActivityTable } from "@/components/activity-table";
+import { ExplorerFiltersForm } from "@/components/explorer-filters";
 import { exploreActivities } from "@/lib/analytics";
 import { getActivityDataset } from "@/lib/csv-source";
 import { parseExplorerFilters, type SearchParams } from "@/lib/query";
-import { SPORT_GROUPS } from "@/lib/types";
+import { SPORT_GROUPS, type SportGroup } from "@/lib/types";
 
 function pageHref(params: SearchParams, page: number) {
   const query = new URLSearchParams();
@@ -22,6 +23,17 @@ export default async function ActivitiesPage({ searchParams }: { searchParams: P
   const dataset = await getActivityDataset();
   const result = exploreActivities(dataset.activities, filters);
 
+  const typesByGroup = new Map<SportGroup, Set<string>>();
+  for (const activity of dataset.activities) {
+    const types = typesByGroup.get(activity.sportGroup) ?? new Set<string>();
+    types.add(activity.activityType);
+    typesByGroup.set(activity.sportGroup, types);
+  }
+  const typesBySport: Partial<Record<SportGroup | "", string[]>> = { "": result.activityTypes };
+  for (const group of SPORT_GROUPS) {
+    typesBySport[group] = [...(typesByGroup.get(group) ?? [])].sort();
+  }
+
   return (
     <main className="page-shell activities-page">
       <section className="page-intro">
@@ -29,15 +41,7 @@ export default async function ActivitiesPage({ searchParams }: { searchParams: P
         <div className="archive-count"><strong>{result.total.toLocaleString("en-AU")}</strong><span>matching activities</span></div>
       </section>
 
-      <form className="explorer-filters" method="get">
-        <label className="search-field"><span className="sr-only">Search activity names</span><Search size={17} /><input type="search" name="q" defaultValue={filters.q} placeholder="Search activity names…" /></label>
-        <label><span>Sport group</span><select name="sport" defaultValue={filters.sportGroup ?? ""}><option value="">All sports</option>{SPORT_GROUPS.map((group) => <option key={group}>{group}</option>)}</select></label>
-        <label><span>Exact type</span><select name="type" defaultValue={filters.activityType ?? ""}><option value="">All types</option>{result.activityTypes.map((type) => <option key={type}>{type}</option>)}</select></label>
-        <label><span>Year</span><select name="year" defaultValue={filters.year ?? ""}><option value="">All years</option>{result.availableYears.map((year) => <option key={year}>{year}</option>)}</select></label>
-        <label><span>Sort</span><select name="sort" defaultValue={filters.sort}><option value="date">Date</option><option value="distance">Distance</option><option value="duration">Moving time</option><option value="elevation">Elevation</option></select></label>
-        <label><span>Order</span><select name="direction" defaultValue={filters.direction}><option value="desc">Descending</option><option value="asc">Ascending</option></select></label>
-        <button className="button primary" type="submit"><SlidersHorizontal size={15} /> Apply</button>
-      </form>
+      <ExplorerFiltersForm filters={filters} years={result.availableYears} typesBySport={typesBySport} />
 
       <section className="panel explorer-panel">
         <div className="explorer-meta"><span>Page {result.page} of {result.pageCount}</span><span>50 activities per page</span></div>
