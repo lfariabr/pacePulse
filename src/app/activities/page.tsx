@@ -23,13 +23,15 @@ export default async function ActivitiesPage({ searchParams }: { searchParams: P
   const dataset = await getActivityDataset();
   const result = exploreActivities(dataset.activities, filters);
 
+  const typesByGroup = new Map<SportGroup, Set<string>>();
+  for (const activity of dataset.activities) {
+    const types = typesByGroup.get(activity.sportGroup) ?? new Set<string>();
+    types.add(activity.activityType);
+    typesByGroup.set(activity.sportGroup, types);
+  }
   const typesBySport: Partial<Record<SportGroup | "", string[]>> = { "": result.activityTypes };
   for (const group of SPORT_GROUPS) {
-    typesBySport[group] = [
-      ...new Set(
-        dataset.activities.filter((activity) => activity.sportGroup === group).map((activity) => activity.activityType),
-      ),
-    ].sort();
+    typesBySport[group] = [...(typesByGroup.get(group) ?? [])].sort();
   }
 
   return (

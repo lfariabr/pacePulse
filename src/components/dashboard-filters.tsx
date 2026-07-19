@@ -18,6 +18,11 @@ export function DashboardFiltersForm({
   datasetEnd: string;
 }) {
   const [range, setRange] = useState(filters.range);
+  const [syncedRange, setSyncedRange] = useState(filters.range);
+  if (filters.range !== syncedRange) {
+    setSyncedRange(filters.range);
+    setRange(filters.range);
+  }
 
   return (
     <form className="filter-bar" method="get">

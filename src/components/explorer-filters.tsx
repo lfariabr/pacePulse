@@ -16,6 +16,12 @@ export function ExplorerFiltersForm({
   typesBySport: Partial<Record<SportGroup | "", string[]>>;
 }) {
   const [sportGroup, setSportGroup] = useState<SportGroup | "">(filters.sportGroup ?? "");
+  const [syncedSportGroup, setSyncedSportGroup] = useState(filters.sportGroup ?? "");
+  if ((filters.sportGroup ?? "") !== syncedSportGroup) {
+    setSyncedSportGroup(filters.sportGroup ?? "");
+    setSportGroup(filters.sportGroup ?? "");
+  }
+
   const availableTypes = useMemo(() => typesBySport[sportGroup] ?? [], [typesBySport, sportGroup]);
   const initialType = filters.activityType && availableTypes.includes(filters.activityType) ? filters.activityType : "";
 
