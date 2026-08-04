@@ -9,3 +9,6 @@ coverage
 activities.csv
 .env*
 !.env.example
+
+# Generated personal review exports
+workout-review.md
