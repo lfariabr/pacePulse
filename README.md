@@ -19,6 +19,23 @@ Download your Strava archive, copy its `activities.csv` into the project root, t
 
 `activities.csv` is intentionally ignored by Git. Your activity history, filenames, notes, and media references should never be committed to a public repository.
 
+## Add private gym workouts
+
+PacePulse can normalize completed gym sessions from a private War Room archive without copying the original journal into this repository. First generate the ignored review file:
+
+```bash
+./scripts/workout-extractor.sh /absolute/path/to/warRoom/2026
+```
+
+Then point the server-only workout source at the generated file:
+
+```bash
+cp .env.example .env.local
+# Set PACEPULSE_WORKOUT_FILE to the absolute workout-review.md path.
+```
+
+The parser emits only allowlisted training facts such as date, duration, muscle-group focus, pull-ups, push-ups, and conditioning. Source paths, raw log text, and nested journal prose are not included in the shared workout model. Reconciliation diagnostics identify likely duplicates with Strava Weight Training records before the sources are combined.
+
 ## What it shows
 
 - All-time and period-filtered totals

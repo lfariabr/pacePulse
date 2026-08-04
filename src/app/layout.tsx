@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Activity, ChartNoAxesCombined } from "lucide-react";
+import { Activity, ChartNoAxesCombined, Dumbbell } from "lucide-react";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -19,6 +19,7 @@ export default function RootLayout({ children }: Readonly<{ children: React.Reac
           </Link>
           <nav aria-label="Primary navigation">
             <Link href="/"><ChartNoAxesCombined size={16} /> Overview</Link>
+            <Link href="/strength"><Dumbbell size={16} /> Strength</Link>
             <Link href="/activities"><Activity size={16} /> Activities</Link>
           </nav>
         </header>

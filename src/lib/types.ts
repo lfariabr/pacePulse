@@ -52,6 +52,157 @@ export interface ActivitySource {
   getAll(): Promise<ActivityDataset>;
 }
 
+export const WORKOUT_FOCI = [
+  "Hamstrings",
+  "Chest",
+  "Core",
+  "Quads",
+  "Shoulders",
+  "Arms",
+  "Deadlifts",
+  "Pull-ups",
+  "Conditioning",
+  "General",
+] as const;
+
+export type WorkoutFocus = (typeof WORKOUT_FOCI)[number];
+
+export type ConditioningKind = "Bike" | "Elliptical" | "Rowing" | "Treadmill";
+
+export interface ConditioningEffort {
+  kind: ConditioningKind;
+  durationMinutes: number | null;
+  distanceMeters: number | null;
+  averageWatts: number | null;
+}
+
+export interface Workout {
+  id: string;
+  source: "war-room";
+  dateLocal: string;
+  dateKey: string;
+  monthKey: string;
+  year: number;
+  name: string;
+  focus: WorkoutFocus;
+  durationSeconds: number;
+  pullUps: number | null;
+  pushUps: number | null;
+  pullUpMonthTotal: number | null;
+  pullUpMonthTarget: number | null;
+  conditioning: ConditioningEffort[];
+}
+
+export type WorkoutParseWarningCode =
+  | "missing-date"
+  | "invalid-date"
+  | "missing-time"
+  | "invalid-time";
+
+export interface WorkoutParseWarning {
+  candidate: number;
+  code: WorkoutParseWarningCode;
+}
+
+export interface WorkoutParseDiagnostics {
+  candidateCount: number;
+  parsedCount: number;
+  skippedCount: number;
+  warnings: WorkoutParseWarning[];
+}
+
+export interface WorkoutDataset {
+  workouts: Workout[];
+  diagnostics: WorkoutParseDiagnostics;
+}
+
+export interface WorkoutSource {
+  getAll(): Promise<WorkoutDataset>;
+}
+
+export type StrengthMatchStrategy = "same-wall-clock" | "sydney-offset";
+export type StrengthMatchConfidence = "confident" | "possible";
+
+export interface StrengthActivityMatch {
+  workoutId: string;
+  activityId: string;
+  strategy: StrengthMatchStrategy;
+  confidence: StrengthMatchConfidence;
+  startDeltaMinutes: number;
+  durationDeltaMinutes: number;
+}
+
+export interface StrengthReconciliation {
+  workoutCount: number;
+  stravaStrengthCount: number;
+  matches: StrengthActivityMatch[];
+  unmatchedWorkoutIds: string[];
+  unmatchedActivityIds: string[];
+}
+
+export type StrengthSessionSource = "war-room" | "strava" | "combined";
+
+export interface StrengthSession {
+  id: string;
+  source: StrengthSessionSource;
+  matchConfidence: StrengthMatchConfidence | null;
+  dateLocal: string;
+  dateKey: string;
+  monthKey: string;
+  year: number;
+  name: string;
+  focus: WorkoutFocus;
+  durationSeconds: number;
+  pullUps: number | null;
+  pushUps: number | null;
+  pullUpMonthTotal: number | null;
+  pullUpMonthTarget: number | null;
+  conditioning: ConditioningEffort[];
+}
+
+export interface StrengthLedgerDiagnostics {
+  warRoomWorkouts: number;
+  stravaStrengthActivities: number;
+  confidentDuplicates: number;
+  acceptedPossibleDuplicates: number;
+  stravaOnlySessions: number;
+}
+
+export interface StrengthLedger {
+  sessions: StrengthSession[];
+  diagnostics: StrengthLedgerDiagnostics;
+}
+
+export interface MonthlyStrength {
+  month: string;
+  label: string;
+  sessions: number;
+  durationSeconds: number;
+  pullUps: number;
+  pushUps: number;
+}
+
+export interface StrengthFocusBreakdown {
+  focus: WorkoutFocus;
+  sessions: number;
+  durationSeconds: number;
+  percentage: number;
+}
+
+export interface StrengthSummary {
+  datasetStart: string;
+  datasetEnd: string;
+  sessions: number;
+  activeDays: number;
+  durationSeconds: number;
+  pullUps: number;
+  pushUps: number;
+  monthly: MonthlyStrength[];
+  focusBreakdown: StrengthFocusBreakdown[];
+  heatmap: HeatmapDay[];
+  recent: StrengthSession[];
+}
+
 export interface DashboardFilters {
   range: "all" | "12m" | "ytd" | "year" | "custom";
   year?: number;
