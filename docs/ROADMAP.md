@@ -31,15 +31,23 @@ at `0.1.1`).
 See [`docs/plans/0.2.0-strength-journey.md`](plans/0.2.0-strength-journey.md)
 for what shipped and the review follow-ups already addressed post-merge.
 
-## Next
-
-### v0.3.0 — Overview/strength integration (planned, not started)
-Today `/` (cardio) and `/strength` are two silos with no shared view. This
-release folds strength into the main Overview page so training mix is visible
-in one glance instead of two tabs.
+### Overview/strength integration (`c7d842f`, 2026-08-08)
+Folds strength into the main `/` page: a de-duplicated merge of the strength
+ledger with any raw Strava strength activity it doesn't cover, date-range
+filters that now apply to strength data too, two new metric cards (Strength
+sessions, Pull-ups), strength hours in the monthly rhythm chart and sport-mix
+breakdown, and one merged 52-week consistency heatmap. Recommend tagging as
+**v0.3.0** alongside v0.2.0 once both get a version bump + release notes.
 
 See [`docs/plans/0.3.0-overview-integration.md`](plans/0.3.0-overview-integration.md)
-for the full plan.
+for the plan and what changed from it while building (a dataset-bounds bug
+caught before shipping, and the sportGroup-filter question resolved).
+
+## Next
+
+Nothing queued yet beyond tagging/release notes for v0.2.0 and v0.3.0. The
+transition trend chart deferred from v0.3.0 (stacked monthly cardio-vs-strength
+bars) is the most natural fast-follow if wanted.
 
 ## Future / unscheduled
 
