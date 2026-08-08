@@ -3,6 +3,7 @@ import {
   Activity,
   ArrowRight,
   Clock3,
+  Dumbbell,
   MapPinned,
   Mountain,
   Trophy,
@@ -11,7 +12,17 @@ import { DashboardFiltersForm } from "@/components/dashboard-filters";
 import { TrainingHeatmap } from "@/components/heatmap";
 import { MetricCard } from "@/components/metric-card";
 import { VolumeChart } from "@/components/volume-chart";
-import { buildDashboardSummary } from "@/lib/analytics";
+import {
+  buildDashboardSummary,
+  heatmapSeries,
+  mergedHeatmap,
+  mergeStrengthSessions,
+  monthlyStrengthHours,
+  resolveWindow,
+  strengthTotals,
+  windowStrengthSessions,
+  withStrengthBreakdown,
+} from "@/lib/analytics";
 import { getActivityDataset } from "@/lib/csv-source";
 import {
   formatCompactDuration,
@@ -19,15 +30,58 @@ import {
   formatDistance,
   formatDuration,
   formatElevation,
+  formatNumber,
   formatPaceOrSpeed,
 } from "@/lib/format";
 import { parseDashboardFilters, type SearchParams } from "@/lib/query";
+import { getStrengthLedger } from "@/lib/strength-source";
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const filters = parseDashboardFilters(await searchParams);
-  const dataset = await getActivityDataset();
-  const summary = buildDashboardSummary(dataset.activities, filters);
+  const [dataset, ledger] = await Promise.all([getActivityDataset(), getStrengthLedger()]);
+  const cardioActivities = dataset.activities.filter((activity) => activity.sportGroup !== "Strength");
+  if (!cardioActivities.length) throw new Error("No valid activities are available.");
+  const allStrengthSessions = mergeStrengthSessions(ledger.sessions, dataset.activities);
+
+  // One combined, sport-independent window drives every shared panel (monthly zero-fill,
+  // heatmap, strength totals) so cardio-only date bounds never clip strength data at the edges.
+  const cardioOnlyStart = cardioActivities.at(-1)!.dateKey;
+  const cardioOnlyEnd = cardioActivities[0].dateKey;
+  const combinedMinimum = allStrengthSessions.length
+    ? [cardioOnlyStart, allStrengthSessions.at(-1)!.dateKey].sort()[0]
+    : cardioOnlyStart;
+  const combinedMaximum = allStrengthSessions.length
+    ? [cardioOnlyEnd, allStrengthSessions[0].dateKey].sort().at(-1)!
+    : cardioOnlyEnd;
+
+  const summary = buildDashboardSummary(cardioActivities, filters, {
+    minimum: combinedMinimum,
+    maximum: combinedMaximum,
+  });
   const maximumAnnualHours = Math.max(...summary.annual.map((year) => year.movingSeconds / 3600), 1);
+
+  const window = resolveWindow(filters, combinedMinimum, combinedMaximum);
+  const selectedStrengthSessions = windowStrengthSessions(allStrengthSessions, window.from, window.to);
+  const strength = strengthTotals(selectedStrengthSessions);
+
+  const showStrengthInBreakdown = !filters.sportGroup || filters.sportGroup === "Strength";
+  const sportBreakdown = showStrengthInBreakdown
+    ? withStrengthBreakdown(summary.sportBreakdown, selectedStrengthSessions)
+    : summary.sportBreakdown;
+
+  const strengthHoursByMonth = showStrengthInBreakdown ? monthlyStrengthHours(selectedStrengthSessions) : new Map<string, number>();
+  const monthly = summary.monthly.map((month) => ({
+    ...month,
+    strengthHours: strengthHoursByMonth.get(month.month) ?? 0,
+  }));
+
+  // The consistency heatmap intentionally ignores the sportGroup filter (it's the
+  // "whole picture" panel), so it's built from window-filtered cardio activities
+  // directly rather than summary.heatmap, which is scoped to the selected sport.
+  const cardioForHeatmap = cardioActivities.filter(
+    (activity) => activity.dateKey >= window.from && activity.dateKey <= window.to,
+  );
+  const heatmap = mergedHeatmap(heatmapSeries(cardioForHeatmap, window.to), selectedStrengthSessions, window.to);
 
   return (
     <main className="page-shell">
@@ -89,6 +143,18 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           change={summary.comparison?.elevationGainMeters}
           icon={Mountain}
         />
+        <MetricCard
+          label="Strength sessions"
+          value={formatNumber(strength.sessions)}
+          note="War Room + Strava, reconciled"
+          icon={Dumbbell}
+        />
+        <MetricCard
+          label="Pull-ups"
+          value={formatNumber(strength.pullUps)}
+          note="total reps this period"
+          icon={Trophy}
+        />
       </section>
 
       <section className="dashboard-grid main-analysis">
@@ -97,13 +163,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
             <div><p className="eyebrow">Volume over time</p><h2>Monthly rhythm</h2></div>
             <span className="panel-note">Sport-aware · monthly</span>
           </div>
-          {summary.monthly.length ? <VolumeChart data={summary.monthly} /> : <p className="empty">No activities in this period.</p>}
+          {monthly.length ? <VolumeChart data={monthly} /> : <p className="empty">No activities in this period.</p>}
         </article>
 
         <article className="panel sport-panel">
           <div className="panel-heading"><div><p className="eyebrow">Distribution</p><h2>Sport mix</h2></div></div>
           <div className="sport-list">
-            {summary.sportBreakdown.map((sport) => (
+            {sportBreakdown.map((sport) => (
               <div className="sport-row" key={sport.sportGroup}>
                 <div><strong>{sport.sportGroup}</strong><span>{sport.activities} sessions · {formatCompactDuration(sport.movingSeconds)}</span></div>
                 <strong>{sport.percentage.toFixed(0)}%</strong>
@@ -119,7 +185,7 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <div><p className="eyebrow">Consistency</p><h2>The last 52 weeks</h2></div>
           <span className="panel-note">Colour reflects moving minutes</span>
         </div>
-        <TrainingHeatmap days={summary.heatmap} />
+        <TrainingHeatmap days={heatmap} />
       </section>
 
       <section className="dashboard-grid secondary-analysis">
