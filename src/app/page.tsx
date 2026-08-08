@@ -12,15 +12,17 @@ import { DashboardFiltersForm } from "@/components/dashboard-filters";
 import { TrainingHeatmap } from "@/components/heatmap";
 import { MetricCard } from "@/components/metric-card";
 import { VolumeChart } from "@/components/volume-chart";
-import { buildDashboardSummary, resolveWindow } from "@/lib/analytics";
 import {
+  buildDashboardSummary,
+  heatmapSeries,
   mergedHeatmap,
   mergeStrengthSessions,
   monthlyStrengthHours,
+  resolveWindow,
   strengthTotals,
   windowStrengthSessions,
   withStrengthBreakdown,
-} from "@/lib/combined-analytics";
+} from "@/lib/analytics";
 import { getActivityDataset } from "@/lib/csv-source";
 import {
   formatCompactDuration,
@@ -28,6 +30,7 @@ import {
   formatDistance,
   formatDuration,
   formatElevation,
+  formatNumber,
   formatPaceOrSpeed,
 } from "@/lib/format";
 import { parseDashboardFilters, type SearchParams } from "@/lib/query";
@@ -37,17 +40,27 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
   const filters = parseDashboardFilters(await searchParams);
   const [dataset, ledger] = await Promise.all([getActivityDataset(), getStrengthLedger()]);
   const cardioActivities = dataset.activities.filter((activity) => activity.sportGroup !== "Strength");
-  const summary = buildDashboardSummary(cardioActivities, filters);
+  if (!cardioActivities.length) throw new Error("No valid activities are available.");
+  const allStrengthSessions = mergeStrengthSessions(ledger.sessions, dataset.activities);
+
+  // One combined, sport-independent window drives every shared panel (monthly zero-fill,
+  // heatmap, strength totals) so cardio-only date bounds never clip strength data at the edges.
+  const cardioOnlyStart = cardioActivities.at(-1)!.dateKey;
+  const cardioOnlyEnd = cardioActivities[0].dateKey;
+  const combinedMinimum = allStrengthSessions.length
+    ? [cardioOnlyStart, allStrengthSessions.at(-1)!.dateKey].sort()[0]
+    : cardioOnlyStart;
+  const combinedMaximum = allStrengthSessions.length
+    ? [cardioOnlyEnd, allStrengthSessions[0].dateKey].sort().at(-1)!
+    : cardioOnlyEnd;
+
+  const summary = buildDashboardSummary(cardioActivities, filters, {
+    minimum: combinedMinimum,
+    maximum: combinedMaximum,
+  });
   const maximumAnnualHours = Math.max(...summary.annual.map((year) => year.movingSeconds / 3600), 1);
 
-  const allStrengthSessions = mergeStrengthSessions(ledger.sessions, dataset.activities);
-  const datasetStart = allStrengthSessions.length
-    ? [summary.datasetStart, allStrengthSessions.at(-1)!.dateKey].sort()[0]
-    : summary.datasetStart;
-  const datasetEnd = allStrengthSessions.length
-    ? [summary.datasetEnd, allStrengthSessions[0].dateKey].sort().at(-1)!
-    : summary.datasetEnd;
-  const window = resolveWindow(filters, datasetStart, datasetEnd);
+  const window = resolveWindow(filters, combinedMinimum, combinedMaximum);
   const selectedStrengthSessions = windowStrengthSessions(allStrengthSessions, window.from, window.to);
   const strength = strengthTotals(selectedStrengthSessions);
 
@@ -62,7 +75,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     strengthHours: strengthHoursByMonth.get(month.month) ?? 0,
   }));
 
-  const heatmap = mergedHeatmap(summary.heatmap, selectedStrengthSessions, window.to);
+  // The consistency heatmap intentionally ignores the sportGroup filter (it's the
+  // "whole picture" panel), so it's built from window-filtered cardio activities
+  // directly rather than summary.heatmap, which is scoped to the selected sport.
+  const cardioForHeatmap = cardioActivities.filter(
+    (activity) => activity.dateKey >= window.from && activity.dateKey <= window.to,
+  );
+  const heatmap = mergedHeatmap(heatmapSeries(cardioForHeatmap, window.to), selectedStrengthSessions, window.to);
 
   return (
     <main className="page-shell">
@@ -126,13 +145,13 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
         />
         <MetricCard
           label="Strength sessions"
-          value={strength.sessions.toLocaleString("en-AU")}
+          value={formatNumber(strength.sessions)}
           note="War Room + Strava, reconciled"
           icon={Dumbbell}
         />
         <MetricCard
           label="Pull-ups"
-          value={strength.pullUps.toLocaleString("en-AU")}
+          value={formatNumber(strength.pullUps)}
           note="total reps this period"
           icon={Trophy}
         />
