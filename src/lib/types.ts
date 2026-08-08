@@ -147,6 +147,7 @@ export interface StrengthSession {
   id: string;
   source: StrengthSessionSource;
   matchConfidence: StrengthMatchConfidence | null;
+  activityId: string | null;
   dateLocal: string;
   dateKey: string;
   monthKey: string;

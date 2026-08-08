@@ -102,6 +102,11 @@ describe("unified strength ledger", () => {
       "strava",
       "combined",
     ]);
+    expect(ledger.sessions.map((session) => session.activityId)).toEqual([
+      "possible",
+      "strava-only",
+      "confident",
+    ]);
     expect(ledger.diagnostics).toEqual({
       warRoomWorkouts: 2,
       stravaStrengthActivities: 3,
