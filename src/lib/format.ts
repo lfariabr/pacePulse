@@ -36,6 +36,20 @@ export function formatDate(dateKey: string, includeYear = true) {
   }).format(date);
 }
 
+export function formatLocalTime(dateLocal: string) {
+  const date = new Date(`${dateLocal}Z`);
+  return new Intl.DateTimeFormat("en-AU", {
+    hour: "numeric",
+    minute: "2-digit",
+    hour12: true,
+    timeZone: "UTC",
+  }).format(date).toLowerCase();
+}
+
+export function formatNumber(value: number) {
+  return value.toLocaleString("en-AU");
+}
+
 function pace(seconds: number) {
   const rounded = Math.round(seconds);
   const minutes = Math.floor(rounded / 60);
