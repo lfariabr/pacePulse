@@ -48,6 +48,10 @@ function field(block: string, label: string) {
   return match?.[1]?.trim() ?? null;
 }
 
+function isReviewed(block: string) {
+  return /^- \[[xX]\]\s+Reviewed\s*$/m.test(block);
+}
+
 function groupedInteger(value: string) {
   const normalized = value.replace(/[,.]/g, "");
   const parsed = Number(normalized);
@@ -119,9 +123,11 @@ function countBeforePhrase(log: string, phrase: RegExp) {
 function parseConditioning(log: string): ConditioningEffort[] {
   const efforts: ConditioningEffort[] = [];
   const pattern = /(\d+)\s*(?:min(?:ute)?s?|m)\s+(?:of\s+)?(elliptical|eliptical|treadmill|rowing|rower|bike(?:\s+ride)?)/gi;
+  const matches = [...log.matchAll(pattern)];
 
-  for (const match of log.matchAll(pattern)) {
-    const tail = log.slice(match.index! + match[0].length, match.index! + match[0].length + 60);
+  matches.forEach((match, index) => {
+    const tailEnd = matches[index + 1]?.index ?? log.length;
+    const tail = log.slice(match.index! + match[0].length, Math.min(tailEnd, match.index! + match[0].length + 60));
     const distance = tail.match(/^\s*\(([\d.,]+)\s*m\)/i);
     const watts = tail.match(/(?:at|@)\s*(\d+)\s*(?:w|watts?)\b/i);
     efforts.push({
@@ -130,7 +136,7 @@ function parseConditioning(log: string): ConditioningEffort[] {
       distanceMeters: distance ? groupedInteger(distance[1]) : null,
       averageWatts: watts ? Number(watts[1]) : null,
     });
-  }
+  });
 
   return efforts;
 }
@@ -159,9 +165,10 @@ export function parseWorkoutReview(markdown: string): WorkoutDataset {
     const log = field(block, "Log");
     const time = parseTimeRange(log);
 
+    if (!isReviewed(block)) warnings.push({ candidate, code: "not-reviewed" });
     if (date.code) warnings.push({ candidate, code: date.code });
     if (time.code) warnings.push({ candidate, code: time.code });
-    if (!date.dateKey || !time.value || !log) return;
+    if (!isReviewed(block) || !date.dateKey || !time.value || !log) return;
 
     const pullUps = countBeforePhrase(log, /(\d[\d,.]*)\s*pull[- ]?ups?\b/i);
     const pushUps = countBeforePhrase(log, /(\d[\d,.]*)\s*push[- ]?ups?\b/i);

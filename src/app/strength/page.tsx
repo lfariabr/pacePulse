@@ -163,7 +163,14 @@ export default async function StrengthPage() {
             <div><strong>{ledger.diagnostics.warRoomWorkouts}</strong><span>reviewed War Room workouts</span></div>
             <div><strong>{ledger.diagnostics.confidentDuplicates}</strong><span>confident Strava duplicates</span></div>
             <div><strong>{ledger.diagnostics.acceptedPossibleDuplicates}</strong><span>confirmed near-duplicates</span></div>
-            <div><strong>{ledger.diagnostics.stravaOnlySessions}</strong><span>Strava-only session retained</span></div>
+            <div>
+              <strong>{ledger.diagnostics.stravaOnlySessions}</strong>
+              <span>
+                {ledger.diagnostics.stravaOnlySessions === 1
+                  ? "Strava-only session retained"
+                  : "Strava-only sessions retained"}
+              </span>
+            </div>
           </div>
           <p className="source-note">
             Matching changes reconciliation only. Original timestamps and source records remain untouched.

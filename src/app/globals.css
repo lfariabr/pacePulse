@@ -278,7 +278,7 @@ select:focus, input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px r
 .strength-recent-row > div span, .strength-recent-row time span { color: var(--muted); font-size: 9px; }
 .strength-recent-row time { font-style: normal; }
 .strength-recent-row > strong { text-align: right; }
-.source-badge { width: max-content; border: 1px solid currentColor; border-radius: 999px; padding: 4px 7px; font-size: 8px; white-space: nowrap; }
+.source-badge { width: max-content; border: 1px solid currentcolor; border-radius: 999px; padding: 4px 7px; font-size: 8px; white-space: nowrap; }
 .source-combined { color: #c084fc; background: rgba(192,132,252,.06); }
 .source-war-room { color: var(--orange-soft); background: rgba(255,107,53,.06); }
 .source-strava { color: #52c2ff; background: rgba(82,194,255,.06); }

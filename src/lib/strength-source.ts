@@ -9,8 +9,8 @@ import { getWorkoutDataset } from "@/lib/workout-source";
 let ledgerPromise: Promise<StrengthLedger> | undefined;
 
 export function getStrengthLedger() {
-  ledgerPromise ??= Promise.all([getWorkoutDataset(), getActivityDataset()]).then(
-    ([workoutDataset, activityDataset]) => {
+  ledgerPromise ??= Promise.all([getWorkoutDataset(), getActivityDataset()])
+    .then(([workoutDataset, activityDataset]) => {
       const reconciliation = reconcileStrengthActivities(
         workoutDataset.workouts,
         activityDataset.activities,
@@ -21,7 +21,10 @@ export function getStrengthLedger() {
         reconciliation,
         true,
       );
-    },
-  );
+    })
+    .catch((error) => {
+      ledgerPromise = undefined;
+      throw error;
+    });
   return ledgerPromise;
 }

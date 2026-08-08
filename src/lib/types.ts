@@ -97,7 +97,8 @@ export type WorkoutParseWarningCode =
   | "missing-date"
   | "invalid-date"
   | "missing-time"
-  | "invalid-time";
+  | "invalid-time"
+  | "not-reviewed";
 
 export interface WorkoutParseWarning {
   candidate: number;

@@ -5,7 +5,7 @@ const REVIEW = `# Workout Review
 
 ### Workout candidate
 
-- [ ] Reviewed
+- [x] Reviewed
 - **Source:** \`months/example.md\`
 - **Date context:** 02st day of January 2026
 - **Log:** - [X] 05h00 to 05h50 Gym workout Quads + 100 pull ups (160/2,000) + 40 push ups
@@ -16,10 +16,10 @@ const REVIEW = `# Workout Review
 
 ### Workout candidate
 
-- [ ] Reviewed
+- [x] Reviewed
 - **Source:** \`months/example.md\`
 - **Date context:** 03rd day of January 2026
-- **Log:** - [X] 07h45 to 09h10 Gym workout + 15 min rowing (3,000m) + 20 min treadmill
+- **Log:** - [X] 07h45 to 09h10 Gym workout + 15 min rowing (3,000m) + 20 min treadmill at 200W
 
 ---
 `;
@@ -70,7 +70,7 @@ describe("War Room workout review parsing", () => {
         kind: "Treadmill",
         durationMinutes: 20,
         distanceMeters: null,
-        averageWatts: null,
+        averageWatts: 200,
       },
     ]);
   });
@@ -78,11 +78,13 @@ describe("War Room workout review parsing", () => {
   it("skips malformed candidates with non-sensitive diagnostics", () => {
     const malformed = `### Workout candidate
 
+- [x] Reviewed
 - **Date context:** 31st day of February 2026
 - **Log:** - [X] 25h00 to 25h45 Gym workout Chest
 
 ### Workout candidate
 
+- [x] Reviewed
 - **Log:** - [X] Gym workout Arms
 `;
     const dataset = parseWorkoutReview(malformed);
@@ -98,6 +100,24 @@ describe("War Room workout review parsing", () => {
         { candidate: 2, code: "missing-date" },
         { candidate: 2, code: "missing-time" },
       ],
+    });
+  });
+
+  it("skips unreviewed candidates even when otherwise well-formed", () => {
+    const unreviewed = `### Workout candidate
+
+- [ ] Reviewed
+- **Date context:** 02st day of January 2026
+- **Log:** - [X] 05h00 to 05h50 Gym workout Quads + 100 pull ups
+`;
+    const dataset = parseWorkoutReview(unreviewed);
+
+    expect(dataset.workouts).toEqual([]);
+    expect(dataset.diagnostics).toEqual({
+      candidateCount: 1,
+      parsedCount: 0,
+      skippedCount: 1,
+      warnings: [{ candidate: 1, code: "not-reviewed" }],
     });
   });
 });

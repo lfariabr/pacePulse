@@ -20,6 +20,9 @@ export class MarkdownWorkoutSource implements WorkoutSource {
 let datasetPromise: Promise<WorkoutDataset> | undefined;
 
 export function getWorkoutDataset() {
-  datasetPromise ??= new MarkdownWorkoutSource().getAll();
+  datasetPromise ??= new MarkdownWorkoutSource().getAll().catch((error) => {
+    datasetPromise = undefined;
+    throw error;
+  });
   return datasetPromise;
 }
