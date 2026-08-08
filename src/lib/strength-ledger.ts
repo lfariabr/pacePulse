@@ -32,7 +32,6 @@ export function buildStrengthLedger(
       ...workout,
       source: match ? "combined" : "war-room",
       matchConfidence: match?.confidence ?? null,
-      activityId: match?.activityId ?? null,
     };
   });
 
@@ -47,7 +46,6 @@ export function buildStrengthLedger(
       id: `strava:${activity.id}`,
       source: "strava",
       matchConfidence: null,
-      activityId: activity.id,
       dateLocal: activity.dateLocal,
       dateKey: activity.dateKey,
       monthKey: activity.monthKey,

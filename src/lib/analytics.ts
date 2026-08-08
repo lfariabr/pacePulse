@@ -38,7 +38,7 @@ function clampDate(value: string, minimum: string, maximum: string) {
   return value < minimum ? minimum : value > maximum ? maximum : value;
 }
 
-export interface DateWindow {
+interface DateWindow {
   from: string;
   to: string;
   label: string;
@@ -46,7 +46,7 @@ export interface DateWindow {
   comparisonTo?: string;
 }
 
-export function resolveWindow(filters: DashboardFilters, minimum: string, maximum: string): DateWindow {
+function resolveWindow(filters: DashboardFilters, minimum: string, maximum: string): DateWindow {
   if (filters.range === "12m") {
     const from = clampDate(shiftDays(maximum, -364), minimum, maximum);
     const span = daysBetween(from, maximum) + 1;
