@@ -10,6 +10,7 @@ import type {
   ExplorerResult,
   HeatmapDay,
   MonthlyVolume,
+  RecentEntry,
   SportBreakdown,
   SportGroup,
   StrengthSession,
@@ -279,6 +280,7 @@ export function buildDashboardSummary(
   allActivities: Activity[],
   filters: DashboardFilters,
   windowBounds?: { minimum: string; maximum: string },
+  recentLimit = 8,
 ): DashboardSummary {
   if (!allActivities.length) throw new Error("No valid activities are available.");
   const datasetStart = allActivities.at(-1)!.dateKey;
@@ -313,7 +315,7 @@ export function buildDashboardSummary(
     annual: annualSeries(selected, window.from, window.to),
     heatmap: heatmapSeries(selected, window.to),
     records: activityRecords(selected),
-    recent: selected.slice(0, 8),
+    recent: selected.slice(0, recentLimit),
     availableYears: [...new Set(allActivities.map((activity) => activity.year))].sort((a, b) => b - a),
   };
 }
@@ -415,6 +417,19 @@ export function withStrengthBreakdown(
     ...item,
     percentage: totalMoving ? (item.movingSeconds / totalMoving) * 100 : 0,
   }));
+}
+
+/** Interleaves cardio activities and strength sessions by date, newest first. */
+export function mergedRecent(
+  cardioRecent: Activity[],
+  strengthSessions: StrengthSession[],
+  limit: number,
+): RecentEntry[] {
+  const entries: RecentEntry[] = [
+    ...cardioRecent.map((data): RecentEntry => ({ kind: "activity", data })),
+    ...strengthSessions.map((data): RecentEntry => ({ kind: "strength", data })),
+  ];
+  return entries.sort((a, b) => b.data.dateLocal.localeCompare(a.data.dateLocal)).slice(0, limit);
 }
 
 export function exploreActivities(

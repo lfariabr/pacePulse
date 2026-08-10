@@ -5,7 +5,6 @@ import {
   Clock3,
   Dumbbell,
   MapPinned,
-  Mountain,
   Trophy,
 } from "lucide-react";
 import { DashboardFiltersForm } from "@/components/dashboard-filters";
@@ -16,6 +15,7 @@ import {
   buildDashboardSummary,
   heatmapSeries,
   mergedHeatmap,
+  mergedRecent,
   mergeStrengthSessions,
   monthlyStrengthHours,
   resolveWindow,
@@ -29,12 +29,12 @@ import {
   formatDate,
   formatDistance,
   formatDuration,
-  formatElevation,
   formatNumber,
   formatPaceOrSpeed,
 } from "@/lib/format";
 import { parseDashboardFilters, type SearchParams } from "@/lib/query";
 import { getStrengthLedger } from "@/lib/strength-source";
+import type { RecentEntry } from "@/lib/types";
 
 export default async function DashboardPage({ searchParams }: { searchParams: Promise<SearchParams> }) {
   const filters = parseDashboardFilters(await searchParams);
@@ -54,10 +54,12 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     ? [cardioOnlyEnd, allStrengthSessions[0].dateKey].sort().at(-1)!
     : cardioOnlyEnd;
 
-  const summary = buildDashboardSummary(cardioActivities, filters, {
-    minimum: combinedMinimum,
-    maximum: combinedMaximum,
-  });
+  const summary = buildDashboardSummary(
+    cardioActivities,
+    filters,
+    { minimum: combinedMinimum, maximum: combinedMaximum },
+    20,
+  );
   const maximumAnnualHours = Math.max(...summary.annual.map((year) => year.movingSeconds / 3600), 1);
 
   const window = resolveWindow(filters, combinedMinimum, combinedMaximum);
@@ -82,6 +84,10 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
     (activity) => activity.dateKey >= window.from && activity.dateKey <= window.to,
   );
   const heatmap = mergedHeatmap(heatmapSeries(cardioForHeatmap, window.to), selectedStrengthSessions, window.to);
+
+  const recent = showStrengthInBreakdown
+    ? mergedRecent(summary.recent, selectedStrengthSessions, 8)
+    : summary.recent.slice(0, 8).map((data): RecentEntry => ({ kind: "activity", data }));
 
   return (
     <main className="page-shell">
@@ -135,13 +141,6 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           note="across distance sports"
           change={summary.comparison?.distanceMeters}
           icon={MapPinned}
-        />
-        <MetricCard
-          label="Elevation"
-          value={formatElevation(summary.totals.elevationGainMeters)}
-          note="vertical gain"
-          change={summary.comparison?.elevationGainMeters}
-          icon={Mountain}
         />
         <MetricCard
           label="Strength sessions"
@@ -209,9 +208,9 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <div className="panel-heading"><div><p className="eyebrow">Edge of the archive</p><h2>Personal records</h2></div><Trophy size={20} /></div>
           <div className="record-grid">
             {summary.records.map((record) => (
-              <div className="record" key={record.label}>
+              <Link className="record" href={`/activities/${record.activity.id}`} key={record.label}>
                 <span>{record.label}</span><strong>{record.value}</strong><small>{record.detail}</small>
-              </div>
+              </Link>
             ))}
             {!summary.records.length && <p className="empty">No records for this selection.</p>}
           </div>
@@ -224,15 +223,30 @@ export default async function DashboardPage({ searchParams }: { searchParams: Pr
           <Link className="text-link" href="/activities">Explore all <ArrowRight size={15} /></Link>
         </div>
         <div className="recent-list">
-          {summary.recent.map((activity) => (
-            <div className="recent-row" key={activity.id}>
-              <span className={`sport-dot sport-${activity.sportGroup.toLowerCase()}`} />
-              <div><strong>{activity.name}</strong><span>{activity.activityType} · {formatDate(activity.dateKey)}</span></div>
-              <span>{formatDistance(activity.distanceMeters)}</span>
-              <span>{formatDuration(activity.movingSeconds)}</span>
-              <span>{formatPaceOrSpeed(activity)}</span>
-            </div>
-          ))}
+          {recent.map((entry) => {
+            if (entry.kind === "strength") {
+              const session = entry.data;
+              return (
+                <div className="recent-row" key={session.id}>
+                  <span className="sport-dot sport-strength" />
+                  <div><strong>{session.name}</strong><span>{session.focus} · {formatDate(session.dateKey)}</span></div>
+                  <span>—</span>
+                  <span>{formatDuration(session.durationSeconds)}</span>
+                  <span>{session.pullUps === null ? "—" : `${session.pullUps} pull-ups`}</span>
+                </div>
+              );
+            }
+            const activity = entry.data;
+            return (
+              <div className="recent-row" key={activity.id}>
+                <span className={`sport-dot sport-${activity.sportGroup.toLowerCase()}`} />
+                <div><strong>{activity.name}</strong><span>{activity.activityType} · {formatDate(activity.dateKey)}</span></div>
+                <span>{formatDistance(activity.distanceMeters)}</span>
+                <span>{formatDuration(activity.movingSeconds)}</span>
+                <span>{formatPaceOrSpeed(activity)}</span>
+              </div>
+            );
+          })}
         </div>
       </section>
     </main>

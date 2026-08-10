@@ -193,3 +193,8 @@ export function getActivityDataset() {
   datasetPromise ??= new CsvActivitySource().getAll();
   return datasetPromise;
 }
+
+export async function getActivityById(id: string): Promise<Activity | null> {
+  const dataset = await getActivityDataset();
+  return dataset.activities.find((activity) => activity.id === id) ?? null;
+}
