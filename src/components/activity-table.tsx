@@ -3,12 +3,8 @@
 import { useEffect, useRef, useState } from "react";
 import { Activity as ActivityIcon, Flame, Gauge, HeartPulse, Mountain, Timer, X } from "lucide-react";
 import type { Activity } from "@/lib/types";
-import { formatDate, formatDistance, formatDuration, formatElevation, formatPaceOrSpeed } from "@/lib/format";
-
-function OptionalMetric({ label, value }: { label: string; value: string | null }) {
-  if (!value) return null;
-  return <div className="detail-metric"><span>{label}</span><strong>{value}</strong></div>;
-}
+import { activityDetailMetrics, formatDate, formatDistance, formatDuration, formatElevation, formatPaceOrSpeed } from "@/lib/format";
+import { OptionalMetric } from "@/components/optional-metric";
 
 function ActivityDrawer({ activity, close }: { activity: Activity; close: () => void }) {
   const ref = useRef<HTMLDialogElement>(null);
@@ -28,18 +24,9 @@ function ActivityDrawer({ activity, close }: { activity: Activity; close: () => 
         <div><Gauge size={18} /><span>Pace / speed</span><strong>{formatPaceOrSpeed(activity)}</strong></div>
       </div>
       <div className="detail-grid">
-        <OptionalMetric label="Elapsed time" value={formatDuration(activity.elapsedSeconds)} />
-        <OptionalMetric label="Elevation gain" value={activity.elevationGainMeters === null ? null : formatElevation(activity.elevationGainMeters)} />
-        <OptionalMetric label="Average heart rate" value={activity.averageHeartRate === null ? null : `${Math.round(activity.averageHeartRate)} bpm`} />
-        <OptionalMetric label="Max heart rate" value={activity.maxHeartRate === null ? null : `${Math.round(activity.maxHeartRate)} bpm`} />
-        <OptionalMetric label="Relative effort" value={activity.relativeEffort === null ? null : Math.round(activity.relativeEffort).toLocaleString("en-AU")} />
-        <OptionalMetric label="Calories" value={activity.calories === null ? null : `${Math.round(activity.calories).toLocaleString("en-AU")} kcal`} />
-        <OptionalMetric label="Average power" value={activity.averageWatts === null ? null : `${Math.round(activity.averageWatts)} W`} />
-        <OptionalMetric label="Weighted power" value={activity.weightedAverageWatts === null ? null : `${Math.round(activity.weightedAverageWatts)} W`} />
-        <OptionalMetric label="Average cadence" value={activity.averageCadence === null ? null : Math.round(activity.averageCadence).toLocaleString("en-AU")} />
-        <OptionalMetric label="Steps" value={activity.totalSteps === null ? null : Math.round(activity.totalSteps).toLocaleString("en-AU")} />
-        <OptionalMetric label="Temperature" value={activity.averageTemperature === null ? null : `${activity.averageTemperature.toFixed(1)}°C`} />
-        <OptionalMetric label="Gear" value={activity.gear} />
+        {activityDetailMetrics(activity).map((metric) => (
+          <OptionalMetric label={metric.label} value={metric.value} key={metric.label} />
+        ))}
       </div>
       <div className="drawer-note">
         {activity.averageHeartRate !== null ? <HeartPulse size={16} /> : activity.elevationGainMeters ? <Mountain size={16} /> : <Flame size={16} />}

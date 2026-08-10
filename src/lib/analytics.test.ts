@@ -4,6 +4,7 @@ import {
   buildDashboardSummary,
   exploreActivities,
   mergedHeatmap,
+  mergedRecent,
   mergeStrengthSessions,
   monthlyStrengthHours,
   strengthTotals,
@@ -218,5 +219,33 @@ describe("withStrengthBreakdown", () => {
     ];
 
     expect(withStrengthBreakdown(cardioBreakdown, [])).toBe(cardioBreakdown);
+  });
+});
+
+describe("mergedRecent", () => {
+  it("interleaves cardio activities and strength sessions by date, newest first", () => {
+    const cardio = [
+      strengthActivity("run-newest", "2026-03-01T06:00:00", "Running"),
+      strengthActivity("run-oldest", "2026-01-01T06:00:00", "Running"),
+    ];
+    const sessions = [strengthSession("lift-middle", "2026-02-01T06:00:00")];
+
+    const result = mergedRecent(cardio, sessions, 8);
+
+    expect(result.map((entry) => entry.data.id)).toEqual(["run-newest", "lift-middle", "run-oldest"]);
+    expect(result.map((entry) => entry.kind)).toEqual(["activity", "strength", "activity"]);
+  });
+
+  it("respects the limit after merging", () => {
+    const cardio = [
+      strengthActivity("a", "2026-03-01T06:00:00", "Running"),
+      strengthActivity("b", "2026-02-15T06:00:00", "Running"),
+    ];
+    const sessions = [
+      strengthSession("c", "2026-02-01T06:00:00"),
+      strengthSession("d", "2026-01-01T06:00:00"),
+    ];
+
+    expect(mergedRecent(cardio, sessions, 2).map((entry) => entry.data.id)).toEqual(["a", "b"]);
   });
 });

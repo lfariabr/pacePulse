@@ -271,6 +271,10 @@ export interface ActivityRecord {
   activity: Activity;
 }
 
+export type RecentEntry =
+  | { kind: "activity"; data: Activity }
+  | { kind: "strength"; data: StrengthSession };
+
 export interface DashboardSummary {
   filters: DashboardFilters;
   periodLabel: string;

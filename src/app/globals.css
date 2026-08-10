@@ -101,7 +101,7 @@ select:focus, input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px r
 .section-heading { display: flex; justify-content: space-between; align-items: end; margin: 52px 0 19px; }
 .section-heading.first { margin-top: 46px; }
 .pill { border: 1px solid #67351f; border-radius: 999px; padding: 6px 11px; color: var(--orange-soft); background: rgba(255,107,53,.08); font-size: 11px; }
-.metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 13px; }
+.metric-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 13px; }
 .metric-card { min-width: 0; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: linear-gradient(150deg, #111923, #0c131b); }
 .metric-heading { display: flex; justify-content: space-between; color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: .09em; }
 .metric-heading svg { color: var(--orange); }
@@ -208,7 +208,8 @@ select:focus, input:focus { border-color: var(--orange); box-shadow: 0 0 0 3px r
 .annual-bar { height: 6px; overflow: hidden; border-radius: 99px; background: #1a2430; }
 .annual-bar span { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #b34423, var(--orange)); }
 .record-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 9px; }
-.record { min-width: 0; padding: 13px; border: 1px solid var(--line-soft); border-radius: 10px; background: #0b121a; }
+.record { display: block; min-width: 0; padding: 13px; border: 1px solid var(--line-soft); border-radius: 10px; background: #0b121a; cursor: pointer; transition: border-color .15s ease; }
+.record:hover { border-color: var(--orange-soft); }
 .record > span { display: block; color: var(--orange-soft); font-size: 9px; text-transform: uppercase; letter-spacing: .09em; }
 .record > strong { display: block; margin: 7px 0 5px; font-size: 18px; letter-spacing: -.035em; }
 .record small { display: block; overflow: hidden; color: var(--muted-2); font-size: 9px; white-space: nowrap; text-overflow: ellipsis; }
