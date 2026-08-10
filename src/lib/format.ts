@@ -73,3 +73,26 @@ export function percentageChange(current: number, previous: number | null) {
   if (!previous) return null;
   return ((current - previous) / previous) * 100;
 }
+
+export interface DetailMetric {
+  label: string;
+  value: string | null;
+}
+
+/** Optional per-activity metrics (elevation, HR, power, etc.), shared by the Explorer drawer and the activity detail page. */
+export function activityDetailMetrics(activity: Activity): DetailMetric[] {
+  return [
+    { label: "Elapsed time", value: formatDuration(activity.elapsedSeconds) },
+    { label: "Elevation gain", value: activity.elevationGainMeters === null ? null : formatElevation(activity.elevationGainMeters) },
+    { label: "Average heart rate", value: activity.averageHeartRate === null ? null : `${Math.round(activity.averageHeartRate)} bpm` },
+    { label: "Max heart rate", value: activity.maxHeartRate === null ? null : `${Math.round(activity.maxHeartRate)} bpm` },
+    { label: "Relative effort", value: activity.relativeEffort === null ? null : Math.round(activity.relativeEffort).toLocaleString("en-AU") },
+    { label: "Calories", value: activity.calories === null ? null : `${Math.round(activity.calories).toLocaleString("en-AU")} kcal` },
+    { label: "Average power", value: activity.averageWatts === null ? null : `${Math.round(activity.averageWatts)} W` },
+    { label: "Weighted power", value: activity.weightedAverageWatts === null ? null : `${Math.round(activity.weightedAverageWatts)} W` },
+    { label: "Average cadence", value: activity.averageCadence === null ? null : Math.round(activity.averageCadence).toLocaleString("en-AU") },
+    { label: "Steps", value: activity.totalSteps === null ? null : Math.round(activity.totalSteps).toLocaleString("en-AU") },
+    { label: "Temperature", value: activity.averageTemperature === null ? null : `${activity.averageTemperature.toFixed(1)}°C` },
+    { label: "Gear", value: activity.gear },
+  ];
+}

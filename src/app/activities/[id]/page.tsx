@@ -3,7 +3,7 @@ import { notFound } from "next/navigation";
 import { Activity as ActivityIcon, ArrowLeft, Flame, Gauge, HeartPulse, Mountain, Timer } from "lucide-react";
 import { OptionalMetric } from "@/components/optional-metric";
 import { getActivityById } from "@/lib/csv-source";
-import { formatDate, formatDistance, formatDuration, formatElevation, formatPaceOrSpeed } from "@/lib/format";
+import { activityDetailMetrics, formatDate, formatDistance, formatDuration, formatPaceOrSpeed } from "@/lib/format";
 
 export default async function ActivityDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -29,18 +29,9 @@ export default async function ActivityDetailPage({ params }: { params: Promise<{
       </div>
 
       <div className="detail-grid">
-        <OptionalMetric label="Elapsed time" value={formatDuration(activity.elapsedSeconds)} />
-        <OptionalMetric label="Elevation gain" value={activity.elevationGainMeters === null ? null : formatElevation(activity.elevationGainMeters)} />
-        <OptionalMetric label="Average heart rate" value={activity.averageHeartRate === null ? null : `${Math.round(activity.averageHeartRate)} bpm`} />
-        <OptionalMetric label="Max heart rate" value={activity.maxHeartRate === null ? null : `${Math.round(activity.maxHeartRate)} bpm`} />
-        <OptionalMetric label="Relative effort" value={activity.relativeEffort === null ? null : Math.round(activity.relativeEffort).toLocaleString("en-AU")} />
-        <OptionalMetric label="Calories" value={activity.calories === null ? null : `${Math.round(activity.calories).toLocaleString("en-AU")} kcal`} />
-        <OptionalMetric label="Average power" value={activity.averageWatts === null ? null : `${Math.round(activity.averageWatts)} W`} />
-        <OptionalMetric label="Weighted power" value={activity.weightedAverageWatts === null ? null : `${Math.round(activity.weightedAverageWatts)} W`} />
-        <OptionalMetric label="Average cadence" value={activity.averageCadence === null ? null : Math.round(activity.averageCadence).toLocaleString("en-AU")} />
-        <OptionalMetric label="Steps" value={activity.totalSteps === null ? null : Math.round(activity.totalSteps).toLocaleString("en-AU")} />
-        <OptionalMetric label="Temperature" value={activity.averageTemperature === null ? null : `${activity.averageTemperature.toFixed(1)}°C`} />
-        <OptionalMetric label="Gear" value={activity.gear} />
+        {activityDetailMetrics(activity).map((metric) => (
+          <OptionalMetric label={metric.label} value={metric.value} key={metric.label} />
+        ))}
       </div>
 
       <div className="drawer-note">
